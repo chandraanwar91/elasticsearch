@@ -178,158 +178,6 @@ After publishing, two configuration files will be created.
   
   - `config/scout.php` where you can use package as a laravel scout driver.
 
-## Working with console environment (Laravel & Lumen)
-
-With some artisan commands you can do some tasks such as creating or updating settings, mappings and aliases.
-
-Note that all commands are running with `--connection=default` option, you can change it through the command.
-
-These are all available commands:
-
-#### List All indices on server
-
-```bash
-$ php artisan es:indices:list
-
-+----------------------+--------+--------+----------+------------------------+-----+-----+------------+--------------+------------+----------------+
-| configured (es.php)  | health | status | index    | uuid                   | pri | rep | docs.count | docs.deleted | store.size | pri.store.size |
-+----------------------+--------+--------+----------+------------------------+-----+-----+------------+--------------+------------+----------------+
-| yes                  | green  | open   | my_index | 5URW60KJQNionAJgL6Q2TQ | 1   | 0   | 0          | 0            | 260b       | 260b           |
-+----------------------+--------+--------+----------+------------------------+-----+-----+------------+--------------+------------+----------------+
-
-```
-
-#### Create indices defined in `es.php` config file
-
-Note that creating operation skips the index if exists.
-
-```bash
-# Create all indices in config file.
-
-$ php artisan es:indices:create
-
-# Create only 'my_index' index in config file
-
-$ php artisan es:indices:create my_index 
-
-```
-
-#### Update indices defined in `es.php` config file
-
-Note that updating operation updates indices setting, aliases and mapping and doesn't delete the indexed data.
-
-```bash
-# Update all indices in config file.
-
-$ php artisan es:indices:update
-
-# Update only 'my_index' index in config file
-
-$ php artisan es:indices:update my_index 
-
-```
-
-#### Drop index
-
-Be careful when using this command, you will lose your index data!
-
-Running drop command with `--force` option will skip all confirmation messages.
-
-```bash
-# Drop all indices in config file.
-
-$ php artisan es:indices:drop
-
-# Drop specific index on sever. Not matter for index to be exist in config file or not.
-
-$ php artisan es:indices:drop my_index 
-
-```
-
-
-#### Reindexing data (with zero downtime)
-
-##### First, why reindexing?
-
-Changing index mapping doesn't reflect without data reindexing, otherwise your search results will not work on the right way.
-
-To avoid down time, your application should work with index `alias` not index `name`.
-
-The index `alias` is a constant name that application should work with to avoid change index names.
-
-##### Assume that we want to change mapping for `my_index`, this is how to do that:
-
-1) Add `alias` as example `my_index_alias` to `my_index` configuration and make sure that application is working with.
-
-```php
-"aliases" => [
-    "my_index_alias"
-]       
-```
-
-2) Update index with command:
-
-```bash
-$ php artisan es:indices:update my_index
-```
-
-3) Create a new index as example `my_new_index` with your new mapping in configuration file.
-
-```bash
-$ php artisan es:indices:create my_new_index
-```
-
-4) Reindex data from `my_index` into `my_new_index` with command:
-
-```bash
-$ php artisan es:indices:reindex my_index my_new_index
-
-# Control bulk size. Adjust it with your server.
-
-$ php artisan es:indices:reindex my_index my_new_index --bulk-size=2000
-
-# Control query scroll value.
-
-$ php artisan es:indices:reindex my_index my_new_index --bulk-size=2000 --scroll=2m
-
-# Skip reindexing errors such as mapper parsing exceptions.
-
-$ php artisan es:indices:reindex my_index my_new_index --bulk-size=2000 --skip-errors 
-
-# Hide all reindexing errors and show the progres bar only.
-
-$ php artisan es:indices:reindex my_index my_new_index --bulk-size=2000 --skip-errors --hide-errors
-```
-
-5) Remove `my_index_alias` alias from `my_index` and add it to `my_new_index` in configuration file and update with command:
-
-```bash
-$ php artisan es:indices:update
-```
-
-
-## Usage as a Laravel Scout driver
-
-First, follow [Laravel Scout installation](https://laravel.com/docs/5.4/scout#installation).
-
-All you have to do is updating these lines in `config/scout.php` configuration file.
-
-```php
-# change the default driver to 'es'
-	
-'driver' => env('SCOUT_DRIVER', 'es'),
-	
-# link `es` driver with default elasticsearch connection in config/es.php
-	
-'es' => [
-    'connection' => env('ELASTIC_CONNECTION', 'default'),
-],
-```
-
-Have a look at [laravel Scout documentation](https://laravel.com/docs/5.4/scout#configuration).
-
-
-
 ## Elasticsearch data model
 
 Each index type has a corresponding "Model" which is used to interact with that type.
@@ -344,10 +192,10 @@ namespace App;
 
 use Chandraanwar91\Elasticsearch\Model;
 
-class Post extends Model
+class Book extends Model
 {
         
-    protected $type = "posts";
+    protected $type = "books";
     
 }
 ```
@@ -373,7 +221,7 @@ class Post extends Model
     # To override default index name of es.php file.
     protected $index = "my_index";
     
-    protected $type = "posts";
+    protected $type = "books";
     
 }
 ```
@@ -386,12 +234,12 @@ Once you have created a model and its associated index type, you are ready to st
 ```php
 <?php
 
-use App\Post;
+use App\Models\Book;
 
-$posts = App\Post::all();
+$books = Book::all();
 
-foreach ($posts as $post) {
-    echo $post->title;
+foreach ($books as $book) {
+    echo $book->name;
 }
 
 ```
@@ -401,7 +249,7 @@ foreach ($posts as $post) {
 The `all` method will return all of the results in the model's type. Each elasticsearch model serves as a query builder, you may also add constraints to queries, and then use the `get()` method to retrieve the results:
 
 ```php
-$posts = App\Post::where('status', 1)
+$books = App\Book::where('status', 1)
                ->orderBy('created_at', 'desc')
                ->take(10)
                ->get();
@@ -413,7 +261,7 @@ $posts = App\Post::where('status', 1)
 
 ```php
 // Retrieve a model by document key...
-$posts = App\Post::find("AVp_tCaAoV7YQD3Esfmp");
+$book = Book::find("AVp_tCaAoV7YQD3Esfmp");
 ```
 
 
@@ -427,7 +275,7 @@ To create a new document, simply create a new model instance, set attributes on 
 
 namespace App\Http\Controllers;
 
-use App\Post;
+use App\Models\Book;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
@@ -443,9 +291,9 @@ class PostController extends Controller
     {
         // Validate the request...
 
-        $post = new Post;
+        $book = new Book;
 
-        $post->title = $request->title;
+        $bo->title = $request->title;
 
         $post->save();
     }
