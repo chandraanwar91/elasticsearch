@@ -21,16 +21,11 @@
     ],
     "autoload": {
         "psr-4": {
-            "chandraanwar91\\Elasticsearch\\": "src/"
+            "Chandraanwar91\\Elasticsearch\\": "src/"
         },
         "files": [
             "src/helpers.php"
         ]
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "chandraanwar91\\Elasticsearch\\Tests\\": "tests/"
-        }
     },
     "require": {
         "php": ">=5.6.6",
