@@ -79,7 +79,7 @@ class Model
      * @param  array $attributes
      * @param  bool $exists
      */
-    function __construct($attributes = [], $exists = false)
+    public function __construct($attributes = [], $exists = false)
     {
         $this->attributes = $attributes;
 
@@ -156,20 +156,16 @@ class Model
             // Search in original model attributes
 
             return $this->getOriginalAttribute($name);
-
         } elseif (in_array($name, $this->appends)) {
 
             // Search in appends model attributes
 
             return $this->getAppendsAttribute($name);
-
         } elseif (property_exists($this, $name)) {
-
             return $this->$name;
-
         }
 
-        return NULL;
+        return null;
     }
 
     /**
@@ -192,7 +188,7 @@ class Model
     protected function getAppendsAttribute($name)
     {
         $method = "get" . ucfirst(camel_case($name)) . "Attribute";
-        $value = method_exists($this, $method) ? $this->$method(NULL) : NULL;
+        $value = method_exists($this, $method) ? $this->$method(null) : null;
         return $this->setAttributeType($name, $value);
     }
 
@@ -204,7 +200,6 @@ class Model
      */
     protected function setAttributeType($name, $value)
     {
-
         if (array_key_exists($name, $this->casts)) {
             if (in_array($this->casts[$name], $this->castTypes)) {
                 settype($value, $this->casts[$name]);
@@ -220,7 +215,6 @@ class Model
      */
     public function toArray()
     {
-
         $attributes = [];
 
         foreach ($this->attributes as $name => $value) {
@@ -252,7 +246,6 @@ class Model
      */
     public function __set($name, $value)
     {
-
         $method = "set" . ucfirst(camel_case($name)) . "Attribute";
 
         $value = method_exists($this, $method) ? $this->$method($value) : $value;
@@ -277,6 +270,13 @@ class Model
         $query = app("es")->setModel($this);
 
         $query->connection($this->getConnection());
+
+        $configs = app()['config']['es'];
+
+        if (array_key_exists($this->connection, $configs["connections"])) {
+            $index = !empty($configs["connections"][$this->connection]['index']) ? $configs["connections"][$this->connection]['index'] : '';
+            $query->index($index);
+        }
 
         if ($index = $this->getIndex()) {
             $query->index($index);
@@ -324,9 +324,8 @@ class Model
      * Delete model record
      * @return $this|bool
      */
-    function delete()
+    public function delete()
     {
-
         if (!$this->exists()) {
             return false;
         }
@@ -344,7 +343,6 @@ class Model
      */
     public function save()
     {
-
         $fields = array_except($this->attributes, ["_index", "_type", "_id", "_score"]);
 
         if ($this->exists()) {
@@ -352,7 +350,6 @@ class Model
             // Update the current document
 
             $this->newQuery()->id($this->getID())->update($fields);
-
         } else {
 
             // Check if model key exists in items
@@ -383,7 +380,7 @@ class Model
      * Check model is exists
      * @return bool
      */
-    function exists()
+    public function exists()
     {
         return $this->exists;
     }
@@ -392,7 +389,7 @@ class Model
      * Get model key
      * @return mixed
      */
-    function getID()
+    public function getID()
     {
         return $this->attributes["_id"];
     }
